@@ -32,9 +32,9 @@ function setOutput(pull) {
     var output = '';
     for (var _i = 0, pull_1 = pull; _i < pull_1.length; _i++) {
         var p = pull_1[_i];
-        output = output + p.title + "\n" + p.url + "\n---\n";
+        output = output + p.title + "\\n" + p.html_url + "\\n---\\n";
     }
-    output = output.slice(0, -5); //最後の"\n---\n"を削除
+    output = output.slice(0, -7); //最後の"\\n---\\n"を削除
     core.setOutput('pulls', output);
 }
 var prom = pullRequests(repoOwner, repo);
