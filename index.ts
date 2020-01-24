@@ -4,6 +4,7 @@ import Octokit = require('@octokit/rest')
 
 const token: string = core.getInput('token')
 const labels: string[] = JSON.parse(core.getInput('labels'))
+const skipSec: Number = parseInt(core.getInput('skip_hour')) * 60 * 60
 const repoOwner: string = github.context.repo.owner
 const repo: string = github.context.repo.repo
 
@@ -34,6 +35,15 @@ function filterLabel(labels: Octokit.PullsListResponseItemLabelsItem[],target: s
     }
 }
 
+function filterTime(pull: Octokit.PullsListResponseItem,target: number):boolean{
+    const createdAt = Date.parse(pull.created_at)
+    const gapSec = Math.round((target - createdAt) / 1000)
+    if ( gapSec > skipSec ) {
+        return true
+    }
+    return false
+}
+
 function setOutput(pull:Octokit.PullsListResponseItem[]){
     let output = ''
     for (const p of pull) {
@@ -43,10 +53,11 @@ function setOutput(pull:Octokit.PullsListResponseItem[]){
     core.setOutput('pulls', output)
 }
 
-let prom = pullRequests(repoOwner,repo)
+const now = Date.now()
+const prom = pullRequests(repoOwner,repo)
 prom.then((pulls) => {
     let claim = pulls.data.filter(
-        p => filterLabel(p.labels, labels)
+        p => filterLabel(p.labels, labels) && filterTime(p ,now)
     )
     setOutput(claim)
 })

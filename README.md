@@ -9,6 +9,9 @@ github token.
 List pull requests that match the specified label.  
 json array string (ex. `["WFR","ASAP"]`)
 
+### skip_hour
+Pull requests within this hour will not be listed.
+
 ## Outputs
 ### pulls
 List pull requests string.  
@@ -39,6 +42,7 @@ jobs:
         with:
           token: ${{secrets.GITHUB_TOKEN}}
           labels: '["WFR"]'
+          hour: '24'
       - name: output
         run: echo '${{ steps.list.outputs.pulls }}'
 ```

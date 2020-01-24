@@ -6008,6 +6008,7 @@ var core = __webpack_require__(827);
 var github = __webpack_require__(148);
 var token = core.getInput('token');
 var labels = JSON.parse(core.getInput('labels'));
+var skipSec = parseInt(core.getInput('skip_hour')) * 60 * 60;
 var repoOwner = github.context.repo.owner;
 var repo = github.context.repo.repo;
 function pullRequests(repoOwner, repo) {
@@ -6032,6 +6033,14 @@ function filterLabel(labels, target) {
         return false;
     }
 }
+function filterTime(pull, target) {
+    var createdAt = Date.parse(pull.created_at);
+    var gapSec = Math.round((target - createdAt) / 1000);
+    if (gapSec > skipSec) {
+        return true;
+    }
+    return false;
+}
 function setOutput(pull) {
     var output = '';
     for (var _i = 0, pull_1 = pull; _i < pull_1.length; _i++) {
@@ -6041,9 +6050,10 @@ function setOutput(pull) {
     output = output.slice(0, -7); //最後の"\\n---\\n"を削除
     core.setOutput('pulls', output);
 }
+var now = Date.now();
 var prom = pullRequests(repoOwner, repo);
 prom.then(function (pulls) {
-    var claim = pulls.data.filter(function (p) { return filterLabel(p.labels, labels); });
+    var claim = pulls.data.filter(function (p) { return filterLabel(p.labels, labels) && filterTime(p, now); });
     setOutput(claim);
 });
 
