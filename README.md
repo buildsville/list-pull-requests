@@ -42,7 +42,7 @@ jobs:
         with:
           token: ${{secrets.GITHUB_TOKEN}}
           labels: '["WFR"]'
-          hour: '24'
+          skip_hour: '24'
       - name: output
         run: echo '${{ steps.list.outputs.pulls }}'
 ```
