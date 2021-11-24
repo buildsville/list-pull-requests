@@ -25,6 +25,14 @@ Pull Request Title 2
 https://github.com/buildsville/list-pull-requests/pull/2
 ```
 
+### pulls
+List pull requests numbers.  
+format
+
+```
+[5, 12, 44]
+```
+
 ## Example usage
 ```
 name: remind review

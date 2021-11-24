@@ -8,7 +8,7 @@ const skipSec: Number = parseInt(core.getInput('skip_hour')) * 60 * 60
 const repoOwner: string = github.context.repo.owner
 const repo: string = github.context.repo.repo
 
-function pullRequests(repoOwner:string, repo:string ):Promise<Octokit.Response<Octokit.PullsListResponse>> {
+function pullRequests(repoOwner: string, repo: string): Promise<Octokit.Response<Octokit.PullsListResponse>> {
     let pr = new github.GitHub(token)
     let resp = pr.pulls.list({
         owner: repoOwner,
@@ -21,43 +21,43 @@ function pullRequests(repoOwner:string, repo:string ):Promise<Octokit.Response<O
     return resp
 }
 
-function filterLabel(labels: Octokit.PullsListResponseItemLabelsItem[],target: string[]):boolean{
+function filterLabel(labels: Octokit.PullsListResponseItemLabelsItem[], target: string[]): boolean {
     let labelname = labels.map((label) => {
         return label.name
     })
     let filterdLabels = labelname.filter(
         label => target.indexOf(label) != -1
     )
-    if ( filterdLabels.length == target.length) {
+    if (filterdLabels.length == target.length) {
         return true
     } else {
         return false
     }
 }
 
-function filterTime(pull: Octokit.PullsListResponseItem,target: number):boolean{
+function filterTime(pull: Octokit.PullsListResponseItem, target: number): boolean {
     const createdAt = Date.parse(pull.created_at)
     const gapSec = Math.round((target - createdAt) / 1000)
-    if ( gapSec > skipSec ) {
+    if (gapSec > skipSec) {
         return true
     }
     return false
 }
 
-function setOutput(pull:Octokit.PullsListResponseItem[]){
+function setOutput(pull: Octokit.PullsListResponseItem[]) {
     let output = ''
     for (const p of pull) {
         output = output + p.title + "\\n" + p.html_url + "\\n---\\n"
     }
-    output = output.slice(0,-7) //最後の"\\n---\\n"を削除
+    output = output.slice(0, -7) //最後の"\\n---\\n"を削除
     core.setOutput('pulls', output)
 }
 
 const now = Date.now()
-const prom = pullRequests(repoOwner,repo)
+const prom = pullRequests(repoOwner, repo)
 prom.then((pulls) => {
     let claim = pulls.data.filter(
-        p => filterLabel(p.labels, labels) && filterTime(p ,now)
+        p => filterLabel(p.labels, labels) && filterTime(p, now)
     )
     setOutput(claim)
 })
