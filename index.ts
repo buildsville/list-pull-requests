@@ -1,6 +1,5 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import Octokit = require('@octokit/rest')
 
 const token: string = core.getInput('token')
 const labels: string[] = JSON.parse(core.getInput('labels'))
@@ -8,20 +7,20 @@ const skipSec: Number = parseInt(core.getInput('skip_hour')) * 60 * 60
 const repoOwner: string = github.context.repo.owner
 const repo: string = github.context.repo.repo
 
-function pullRequests(repoOwner:string, repo:string ):Promise<Octokit.Response<Octokit.PullsListResponse>> {
-    let pr = new github.GitHub(token)
-    let resp = pr.pulls.list({
+function pullRequests(repoOwner:string, repo:string ) {
+    let client = github.getOctokit(core.getInput('token'))
+    let resp = client.rest.pulls.list({
         owner: repoOwner,
         repo: repo,
     }).catch(
         e => {
-            console.log(e.message)
+            core.setFailed(e.message)
         }
-    ) as Promise<Octokit.Response<Octokit.PullsListResponse>>
+    )
     return resp
 }
 
-function filterLabel(labels: Octokit.PullsListResponseItemLabelsItem[],target: string[]):boolean{
+function filterLabel(labels ,target: string[]):boolean{
     let labelname = labels.map((label) => {
         return label.name
     })
@@ -35,7 +34,7 @@ function filterLabel(labels: Octokit.PullsListResponseItemLabelsItem[],target: s
     }
 }
 
-function filterTime(pull: Octokit.PullsListResponseItem,target: number):boolean{
+function filterTime(pull ,target: number):boolean{
     const createdAt = Date.parse(pull.created_at)
     const gapSec = Math.round((target - createdAt) / 1000)
     if ( gapSec > skipSec ) {
@@ -44,7 +43,7 @@ function filterTime(pull: Octokit.PullsListResponseItem,target: number):boolean{
     return false
 }
 
-function setOutput(pull:Octokit.PullsListResponseItem[]){
+function setOutput(pull){
     let output = ''
     for (const p of pull) {
         output = output + p.title + "\\n" + p.html_url + "\\n---\\n"
@@ -55,7 +54,7 @@ function setOutput(pull:Octokit.PullsListResponseItem[]){
 
 const now = Date.now()
 const prom = pullRequests(repoOwner,repo)
-prom.then((pulls) => {
+prom.then((pulls: any) => {
     let claim = pulls.data.filter(
         p => filterLabel(p.labels, labels) && filterTime(p ,now)
     )
